@@ -87,3 +87,6 @@ let keyPress = event => {
     moveUser(currentMove);
 }
 document.addEventListener("keydown", keyPress)
+
+
+//Display Alien
