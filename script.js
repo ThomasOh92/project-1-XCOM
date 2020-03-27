@@ -4,6 +4,9 @@ let userPositionRow = 0;
 let userPositionColumn = 0;
 let alienPositionRow = 8;
 let alienPositionColumn = 8;
+let attackButton = document.getElementById('attack-button');
+let playAgainButton = document.getElementById('play-again-button')
+let display = document.getElementById('display')
 
 //Generating initial game board and game state. Setting user's initial position in game state. Setting alien initial position
 for (let i = 0; i < 10; i++){
@@ -109,7 +112,9 @@ let moveUser = direction => {
     console.log('column: ' + userPositionColumn)
     console.log('row: ' + userPositionRow)
     if (nextToAlien()){
-        document.getElementById('attack-button').classList.toggle('hidden')
+        attackButton.classList.remove('hidden')
+    } else {
+        attackButton.classList.add('hidden')
     }
 }
 
@@ -136,5 +141,42 @@ let keyPress = event => {
 }
 document.addEventListener("keydown", keyPress)
 
+//Attack Button Functionality
+let attemptHit = () => {
+    let chance = Math.random()
+    display.classList.remove('hidden')
+    if (chance < 0.5){
+        display.innerText = "Congratulations! Your hit was successful! Play again?"
+        attackButton.classList.add('hidden')
+        playAgainButton.classList.remove('hidden')
+    } else {
+        display.innerText = "You missed :/ Try hitting again!"
+    }
+}
+attackButton.addEventListener("click", attemptHit)
 
-//Attack option
+
+//Reset Game Functionality - Both game board and game state
+let resetGame = () => {
+    removeCurrentDisplay();
+    display.classList.add('hidden')
+    playAgainButton.classList.add('hidden')
+    gameState = [];
+    for (let i = 0; i < 10; i++){
+        let gameStateRow = [];
+        gameState.push(gameStateRow);
+        for (let k = 0; k < 10; k++){
+            gameStateRow.push(null);
+        }
+    }
+    gameState[0][0] = "user";
+    gameState[8][8] = "alien"
+    userPositionRow = 0;
+    userPositionColumn = 0;
+    alienPositionRow = 8;
+    alienPositionColumn = 8;
+
+    displayUser();
+    displayAlien();
+}
+playAgainButton.addEventListener("click", resetGame)
