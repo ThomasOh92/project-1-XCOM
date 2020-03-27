@@ -2,8 +2,10 @@ let gameState = [];
 let gameBoard = document.getElementById('game-board');
 let userPositionRow = 0;
 let userPositionColumn = 0;
+let alienPositionRow = 8;
+let alienPositionColumn = 8;
 
-//Generating initial game board and game state. Setting user's initial position in game state
+//Generating initial game board and game state. Setting user's initial position in game state. Setting alien initial position
 for (let i = 0; i < 10; i++){
     let gameStateRow = [];
     gameState.push(gameStateRow);
@@ -16,6 +18,7 @@ for (let i = 0; i < 10; i++){
     }
 }
 gameState[0][0] = "user";
+gameState[8][8] = "alien"
 
 //Display User
 let displayUser = () => {
@@ -29,10 +32,41 @@ let removeCurrentDisplay = () =>{
     document.getElementById(`${userPositionRow},${userPositionColumn}`).style.backgroundImage = "";
 }
 
+//Display Alien
+let displayAlien = () => {
+    let gameBoardPosition = document.getElementById(`${alienPositionRow},${alienPositionColumn}`)
+    gameBoardPosition.style.backgroundImage = "url('img/alien_idle_face_right.png')"
+}
+displayAlien();
+
+//Function to handle collisions
+let collision = (row, col) =>{
+    if (row === alienPositionRow && col === alienPositionColumn) {
+        return true
+    } else {
+        return false
+    }
+}
+
+//Function to check if next to alien
+let nextToAlien = () => {
+    for (let i = -1; i <= 1; i++){
+        for (let j = -1; j<= 1; j++){
+            if(collision(userPositionRow + i, userPositionColumn + j)){
+                return true
+            }
+        }
+    }
+    return false
+}
+
 //Function to move user around DOM, update game state
 let moveUser = direction => {
     switch(direction){
         case "left":
+            if (userPositionColumn === 0 || collision(userPositionRow, userPositionColumn - 1)) {
+                break
+            }
             removeCurrentDisplay();
             gameState[userPositionRow][userPositionColumn - 1] = "user";
             gameState[userPositionRow][userPositionColumn] = null;
@@ -40,6 +74,9 @@ let moveUser = direction => {
             displayUser()
             break;
         case "up":
+            if (userPositionRow === 0  || collision(userPositionRow - 1, userPositionColumn)) {
+                break
+            }
             removeCurrentDisplay();
             gameState[userPositionRow - 1][userPositionColumn ] = "user";
             gameState[userPositionRow][userPositionColumn] = null;
@@ -47,6 +84,9 @@ let moveUser = direction => {
             displayUser()
             break;
         case "down":
+            if (userPositionRow === 9  || collision(userPositionRow + 1, userPositionColumn)) {
+                break
+            }
             removeCurrentDisplay();
             gameState[userPositionRow + 1][userPositionColumn ] = "user";
             gameState[userPositionRow][userPositionColumn] = null;
@@ -54,6 +94,9 @@ let moveUser = direction => {
             displayUser()
             break;
         case "right":
+            if (userPositionColumn === 9  || collision(userPositionRow, userPositionColumn + 1)) {
+                break
+            }
             removeCurrentDisplay();
             gameState[userPositionRow][userPositionColumn + 1] = "user";
             gameState[userPositionRow][userPositionColumn] = null;
@@ -61,7 +104,12 @@ let moveUser = direction => {
             displayUser()
             break;
         default:
-            //
+            console.log("something went wrong in moving")
+    }
+    console.log('column: ' + userPositionColumn)
+    console.log('row: ' + userPositionRow)
+    if (nextToAlien()){
+        document.getElementById('attack-button').classList.toggle('hidden')
     }
 }
 
@@ -89,4 +137,4 @@ let keyPress = event => {
 document.addEventListener("keydown", keyPress)
 
 
-//Display Alien
+//Attack option
