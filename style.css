@@ -1,9 +1,21 @@
 body{
 	text-align: center;
+	background-color: black;
 }
 
 .hidden{
 	display: none;
+}
+
+.grid-item{
+	border: 2px dashed grey;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+#message, #attack-display{
+	color: white;
 }
 
 #game-board{
@@ -16,9 +28,12 @@ body{
 	grid-template-rows: repeat(10, 40px);
 }
 
-.grid-item{
-	border: 2px dashed grey;
+#heads-up-display{
+	width: 500px;
+	height: 300px;
+	margin: 0 auto;
 	background-size: contain;
 	background-repeat: no-repeat;
-	background-position: center;
+	background-image: url('img/heads_up_display.jpg');
+	border-radius: 25px
 }
