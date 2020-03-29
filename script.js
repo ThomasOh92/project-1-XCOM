@@ -1,6 +1,7 @@
-//Game State and Game Board
+//Game State and Game Board. Turn variable
 let gameState = [];
 let gameBoard = document.getElementById('game-board');
+let currentTurn = "user";
 //User and Alien Coordinates
 let userPositionRow = 0;
 let userPositionColumn = 0;
@@ -12,10 +13,11 @@ let playAgainButton = document.getElementById('play-again-button')
 let message = document.getElementById('message')
 let headsUpDisplay = document.getElementById('heads-up-display')
 //DOM element to display attack probability
-let attackProbability = "50%"
+let attackProbability;
 let attackDisplay = document.createElement('h2')
 attackDisplay.id = "attack-display"
-attackDisplay.innerText = `Attack Probability: ${attackProbability}`
+//Array for line of sight, and to help probability
+let lineOfSightArray = []
 
 //Generating initial game board and game state. Setting user's initial position in game state. Setting alien initial position
 let gameStart = () => {
@@ -32,6 +34,10 @@ let gameStart = () => {
     }
     gameState[0][0] = "user";
     gameState[8][8] = "alien"
+    for (let a = 2; a < 7; a++){
+        gameState[a][4] = "wall";
+        document.getElementById(`${a},${4}`).style.backgroundImage = "url('img/brick_wall.png')";
+    }
 }
 
 //Display User
@@ -51,7 +57,9 @@ let displayAlien = () => {
 
 //Function to handle collisions
 let collision = (row, col) =>{
-    if (row === alienPositionRow && col === alienPositionColumn) {
+    if (gameState[row][col] === "alien") {
+        return true
+    } else if (gameState[row][col] === "wall") {
         return true
     } else {
         return false
@@ -73,7 +81,7 @@ let nextToAlien = () => {
 //Function to check if alien is within line of sight
 //Implementation of Bresenham's line algo to check
 let lineOfSight = (x0, y0, x1, y1) => {
-    let squareArray = [];
+    lineOfSightArray = [];
     //Getting deltas
     let dx = Math.abs(x1 - x0);
     let dy = Math.abs(y1 - y0);
@@ -83,7 +91,7 @@ let lineOfSight = (x0, y0, x1, y1) => {
     //Don't fully understand the math below. Based of Bresenham's algorithm for drawing lines between two points
     let err = (dx > dy ? dx : -dy) / 2; //Decision variable to adjust coordinates
     while (true) {
-        squareArray.push(gameState[x0][y0]);
+        lineOfSightArray.push(gameState[y0][x0]);
         if (x0 === x1 && y0 === y1) {
             break;
         }
@@ -102,7 +110,11 @@ let lineOfSight = (x0, y0, x1, y1) => {
             break;
         }
     }
-    console.log(squareArray)
+    console.log(lineOfSightArray)
+    if (lineOfSightArray.includes("wall")){
+        return false;
+    }
+    return true;
     //if any of the squares are opaque, return false
     //return true
 }
@@ -155,15 +167,79 @@ let moveUser = direction => {
     }
     console.log('column: ' + userPositionColumn)
     console.log('row: ' + userPositionRow)
-    if (nextToAlien() || lineOfSight(userPositionColumn, userPositionRow, alienPositionColumn, alienPositionRow)){
-        //Making Heads Up Display and attack button appear
-        headsUpDisplay.classList.remove('hidden')
-        attackButton.classList.remove('hidden')
-        headsUpDisplay.appendChild(attackDisplay)
-    } else {
-        attackButton.classList.add('hidden')
-        headsUpDisplay.classList.add('hidden')
+    currentTurn = "alien";
+    alienAction()
+}
+
+
+let moveAlien = () => {
+    //Remove current alien display
+    document.getElementById(`${alienPositionRow},${alienPositionColumn}`).style.backgroundImage = "";
+    //While true loop, randomized direction
+    while (true){
+        let randomDirectionNumber = Math.floor((Math.random() * 4) + 1)
+        //Direction Up
+        if (randomDirectionNumber === 1 && alienPositionRow != 0 && gameState[alienPositionRow - 1][alienPositionColumn] === null){
+            gameState[alienPositionRow - 1][alienPositionColumn] = "alien";
+            gameState[alienPositionRow][alienPositionColumn] = null;
+            alienPositionRow--;
+            break;
+        }
+        //Direction Down
+        else if (randomDirectionNumber === 2 && alienPositionRow != 9 && gameState[alienPositionRow + 1][alienPositionColumn] === null){
+            gameState[alienPositionRow + 1][alienPositionColumn] = "alien";
+            gameState[alienPositionRow][alienPositionColumn] = null;
+            alienPositionRow++
+            break
+        }
+        //Direction Left
+        else if (randomDirectionNumber === 3 && alienPositionColumn != 0 && gameState[alienPositionRow][alienPositionColumn - 1] === null){
+            gameState[alienPositionRow][alienPositionColumn - 1] = "alien";
+            gameState[alienPositionRow][alienPositionColumn] = null;
+            alienPositionColumn--;
+            break
+        }
+        //Direction Right
+        else if (randomDirectionNumber === 4 && alienPositionColumn != 9 ** gameState[alienPositionRow][alienPositionColumn + 1] === null) {
+            gameState[alienPositionRow][alienPositionColumn + 1] = "alien";
+            gameState[alienPositionRow][alienPositionColumn] = null;
+            alienPositionColumn++;
+            break
+        }
+        //Keep going until you get a direction
+        else {
+            continue;
+        }
     }
+    displayAlien()
+}
+
+//Handle alien decision logic, post alien action possible shooting
+let alienAction = () => {
+    // if (lineOfSight(alienPositionColumn, alienPositionRow, userPositionColumn, userPositionRow)){
+    //     console.log("I wanna shoot you!")
+    // } else {
+        moveAlien()
+    // }
+      //Post action - If alien is within sight, user can shoot him
+    currentTurn = "user";
+    if (lineOfSight(userPositionColumn, userPositionRow, alienPositionColumn, alienPositionRow) && currentTurn === "user"){
+        triggerHitDisplay();
+    } else {
+        hideHitDisplay();
+    }
+}
+
+let triggerHitDisplay = () => {
+    attackProbability = 100 - (lineOfSightArray.length * 10);
+    attackDisplay.innerText = `Attack Probability: ${attackProbability}%`;
+    headsUpDisplay.classList.remove('hidden');
+    attackButton.classList.remove('hidden');
+    headsUpDisplay.appendChild(attackDisplay);
+}
+
+let hideHitDisplay = () => {
+    headsUpDisplay.classList.add('hidden');
 }
 
 //Event listener to listen capture current move, arrow keys
@@ -185,21 +261,26 @@ let keyPress = event => {
         default:
             currentMove = "input wrong"
     }
-    moveUser(currentMove);
+    if (currentTurn === "user"){
+        moveUser(currentMove);
+    }
 }
 document.addEventListener("keydown", keyPress)
 
 //Attack Button Functionality
 let attemptHit = () => {
-    let chance = Math.random()
+    let chance = Math.random() * 100
     message.classList.remove('hidden')
-    if (chance < 0.5){
-        message.innerText = "Congratulations! Your hit was successful! Play again?"
-        attackButton.classList.add('hidden')
-        playAgainButton.classList.remove('hidden')
+    if (chance < attackProbability){
+        attackButton.classList.add('hidden');
+        message.innerText = "Congratulations! Your hit was successful! Play again?";
+        playAgainButton.classList.remove('hidden');
+        return
     } else {
         message.innerText = "You missed :/ Try hitting again!"
     }
+    currentTurn = "alien";
+    alienAction();
 }
 attackButton.addEventListener("click", attemptHit)
 
@@ -207,6 +288,7 @@ attackButton.addEventListener("click", attemptHit)
 //Reset Game Functionality - Both game board and game state
 let resetGame = () => {
     removeCurrentDisplay();
+    document.getElementById(`${alienPositionRow},${alienPositionColumn}`).style.backgroundImage = "";
     message.classList.add('hidden')
     playAgainButton.classList.add('hidden')
     headsUpDisplay.classList.add('hidden')
@@ -224,7 +306,9 @@ let resetGame = () => {
     userPositionColumn = 0;
     alienPositionRow = 8;
     alienPositionColumn = 8;
-
+    for (let a = 2; a < 7; a++){
+        gameState[a][4] = "wall";
+    }
     displayUser();
     displayAlien();
 }
@@ -234,3 +318,8 @@ playAgainButton.addEventListener("click", resetGame)
 gameStart();
 displayUser();
 displayAlien();
+
+
+//consider refactoring code logic to reflect turn based system more clearly
+//if user turn, can move or attack if line of sight
+//if alien turn, will move or attack if line of sight
