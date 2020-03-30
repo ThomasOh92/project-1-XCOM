@@ -55,7 +55,7 @@ let displayAlien = () => {
     gameBoardPosition.style.backgroundImage = "url('img/alien_idle_face_right.png')"
 }
 
-//Function to handle collisions
+//Function to handle collisions for user
 let collision = (row, col) =>{
     if (gameState[row][col] === "alien") {
         return true
@@ -67,16 +67,16 @@ let collision = (row, col) =>{
 }
 
 //Function to check if next to alien
-let nextToAlien = () => {
-    for (let i = -1; i <= 1; i++){
-        for (let j = -1; j<= 1; j++){
-            if(collision(userPositionRow + i, userPositionColumn + j)){
-                return true
-            }
-        }
-    }
-    return false
-}
+// let nextToAlien = () => {
+//     for (let i = -1; i <= 1; i++){
+//         for (let j = -1; j<= 1; j++){
+//             if(collision(userPositionRow + i, userPositionColumn + j)){
+//                 return true
+//             }
+//         }
+//     }
+//     return false
+// }
 
 //Function to check if alien is within line of sight
 //Implementation of Bresenham's line algo to check
@@ -171,7 +171,7 @@ let moveUser = direction => {
     alienAction()
 }
 
-
+//Function to move alien around
 let moveAlien = () => {
     //Remove current alien display
     document.getElementById(`${alienPositionRow},${alienPositionColumn}`).style.backgroundImage = "";
@@ -214,14 +214,29 @@ let moveAlien = () => {
     displayAlien()
 }
 
+//Function that lets alien shoot
+let alienShoot = () => {
+    let chance = Math.random() * 100
+    message.classList.remove('hidden')
+    attackButton.classList.add('hidden');
+    let alienAttackProbability = 100 - (lineOfSightArray.length * 10);
+    if (chance < alienAttackProbability){
+        message.innerText = "The alien has shot you! Play again?";
+        playAgainButton.classList.remove('hidden');
+        attackButton.classList.add('hidden');
+        return
+    } else {
+        message.innerText = "The alien missed! Keep going!"
+    }
+}
+
 //Handle alien decision logic, post alien action possible shooting
 let alienAction = () => {
-    // if (lineOfSight(alienPositionColumn, alienPositionRow, userPositionColumn, userPositionRow)){
-    //     console.log("I wanna shoot you!")
-    // } else {
-        moveAlien()
-    // }
-      //Post action - If alien is within sight, user can shoot him
+    moveAlien();
+    postAlienAction()
+}
+
+let postAlienAction = () => {
     currentTurn = "user";
     if (lineOfSight(userPositionColumn, userPositionRow, alienPositionColumn, alienPositionRow) && currentTurn === "user"){
         triggerHitDisplay();
@@ -267,7 +282,7 @@ let keyPress = event => {
 }
 document.addEventListener("keydown", keyPress)
 
-//Attack Button Functionality
+//Attack Button Functionality for User
 let attemptHit = () => {
     let chance = Math.random() * 100
     message.classList.remove('hidden')
